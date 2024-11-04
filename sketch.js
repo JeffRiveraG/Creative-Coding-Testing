@@ -1,5 +1,6 @@
 let audio, amp, fft
 
+// Set the default to grayscale
 let isGrayscale = true;
 
 let isPressed = false
@@ -9,6 +10,7 @@ let myShader
 let angle = 0.0
 let jitter = 0.0
 
+// What loads on default. Timeless - The Weeknd, ft. Playboi Carti
 function preload() {
   audio = loadSound('audio/TIMELESS.mp3');
   myShader = loadShader('shader/vertex.vert', 'shader/fragment.frag');
@@ -31,34 +33,45 @@ function setup() {
   // Instead use a nicer looking button
   let customButton = createButton("Upload MP3");
   customButton.position(10, 10); 
+  customButton.style("background-color", "transparent");
   customButton.style("padding", "10px 10px");
   customButton.style("font-size", "16px");
   customButton.style("border", "2px solid #000000");
   customButton.style("border-radius", "15px");
   customButton.style("cursor", "pointer");
-  customButton.mouseOver(() => {
-    customButton.style("background-color", "#FFFFFF");
-    customButton.style("color", "#000000");
-  });
-  customButton.mouseOut(() => {
-    customButton.style("background-color", "transparent");
-    customButton.style("color", "#000000");
-  });
 
   let playback = createButton("Play/Pause");
-  playback.position(10, 70);
+  playback.position(10, 60);
+  playback.style("background-color", "transparent");
   playback.style("padding", "10px 10px");
   playback.style("font-size", "16px");
   playback.style("border", "2px solid #000000");
   playback.style("border-radius", "15px");
   playback.style("cursor", "pointer");
-  playback.mouseOver(() => {
-    playback.style("background-color", "#FFFFFF");
-    playback.style("color", "#000000");
+
+  let colorScheme = createButton("Toggle Color Scheme");
+  colorScheme.position(10, 110);
+  colorScheme.style("background-color", "transparent");
+  colorScheme.style("padding", "10px 10px");
+  colorScheme.style("font-size", "16px"); 
+  colorScheme.style("border", "2px solid #000000");
+  colorScheme.style("border-radius", "15px");
+  colorScheme.style("cursor", "pointer");
+
+  // Allow play/pause button to function
+  playback.mousePressed(() => {
+    if (audio && audio.isPlaying()) {
+      audio.pause();
+      isPressed = false;
+    } else if (audio) {
+      audio.loop();
+      isPressed = true;
+    }
   });
-  playback.mouseOut(() => {
-    playback.style("background-color", "transparent");
-    playback.style("color", "#000000");
+
+  // Color Scheme change button
+  colorScheme.mousePressed(() => {
+    isGrayscale = !isGrayscale;
   });
 
   shader(myShader)
@@ -111,7 +124,7 @@ function colored() {
   myShader.setUniform('uFreq', mapF)
   myShader.setUniform('uAmp', mapV)
 
-  
+
   sphere(200, 400, 400)
 }
 
@@ -160,13 +173,12 @@ function keyPressed() {
     isGrayscale = false;
   }
   if (key == 'p' || key == 'P') {
-    if (isPressed) {
-      audio.pause()
-      isPressed = false
-    }
-    else {
-      isPressed = true
-      audio.loop()
+    if (audio && audio.isPlaying()) {
+      audio.pause();
+      isPressed = false;
+    } else if (audio) {
+      audio.loop();
+      isPressed = true;
     }
   }
 }
