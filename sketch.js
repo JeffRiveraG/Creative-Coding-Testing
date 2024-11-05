@@ -3,16 +3,23 @@ let audio, amp, fft
 // Set the default to grayscale
 let isGrayscale = true;
 
+// Sphere to box logic
+let isSphere = true;
+
 let isPressed = false
 
 let myShader 
 
+// rotate sphere
 let angle = 0.0
 let jitter = 0.0
 
-// What loads on default. Timeless - The Weeknd, ft. Playboi Carti
+// slider for volume control
+var slider;
+
+// What loads on default. 
 function preload() {
-  audio = loadSound('audio/TIMELESS.mp3');
+  audio = loadSound('audio/UNDER YOUR SPELL.mp3');
   myShader = loadShader('shader/vertex.vert', 'shader/fragment.frag');
   
   if (!myShader.isLoaded()) {
@@ -23,56 +30,37 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL)
 
+  // Control volume so it doesn's start so loud
+  slider = createSlider(0, 1, 0.2, 0.2);
+  slider.position(10, 210);
+
   // Create file input for audio upload
   let audioUpload = createFileInput(handleFile);
   audioUpload.attribute("accept", "audio/mp3");
   audioUpload.position(10, 10);
   audioUpload.style("opacity", "0");
-  audioUpload.size(0, 0); // Hide crummy default file input prompt
 
   // Instead use a nicer looking button
   let customButton = createButton("Upload MP3");
-  customButton.position(10, 10); 
-  customButton.style("background-color", "transparent");
-  customButton.style("padding", "10px 10px");
-  customButton.style("font-size", "16px");
-  customButton.style("border", "2px solid #000000");
-  customButton.style("border-radius", "15px");
-  customButton.style("cursor", "pointer");
+  styleButton(customButton, 10, 10);
 
   let playback = createButton("Play/Pause");
-  playback.position(10, 60);
-  playback.style("background-color", "transparent");
-  playback.style("padding", "10px 10px");
-  playback.style("font-size", "16px");
-  playback.style("border", "2px solid #000000");
-  playback.style("border-radius", "15px");
-  playback.style("cursor", "pointer");
+  styleButton(playback, 10, 60);
 
   let colorScheme = createButton("Toggle Color Scheme");
-  colorScheme.position(10, 110);
-  colorScheme.style("background-color", "transparent");
-  colorScheme.style("padding", "10px 10px");
-  colorScheme.style("font-size", "16px"); 
-  colorScheme.style("border", "2px solid #000000");
-  colorScheme.style("border-radius", "15px");
-  colorScheme.style("cursor", "pointer");
+  styleButton(colorScheme, 10, 110);
+
+  let shape = createButton("Toggle Shape");
+  styleButton(shape, 10, 160);
 
   // Allow play/pause button to function
-  playback.mousePressed(() => {
-    if (audio && audio.isPlaying()) {
-      audio.pause();
-      isPressed = false;
-    } else if (audio) {
-      audio.loop();
-      isPressed = true;
-    }
-  });
+  playback.mousePressed(togglePlayback)
 
   // Color Scheme change button
-  colorScheme.mousePressed(() => {
-    isGrayscale = !isGrayscale;
-  });
+  colorScheme.mousePressed(toggleColorScheme)
+
+  // toggle shape from sphere to box
+  shape.mousePressed(toggleShape)
 
   shader(myShader)
   userStartAudio()
@@ -91,6 +79,8 @@ function draw() {
   } else {
     noColor();
   }
+
+  audio.setVolume(slider.value());
 }
 
 function colored() {
@@ -98,7 +88,6 @@ function colored() {
   
   drawingContext.filter = 'blur(px)'
 
-
   fft.analyze()
 
   const volume = amp.getLevel()
@@ -113,6 +102,7 @@ function colored() {
 
   angle = angle + jitter
 
+  // this is rotating the sphere - remove to make it still
   rotateX(sin(freq) + angle * 0.1)
   rotateY(cos(volume) + angle * 0.1)
 
@@ -124,8 +114,12 @@ function colored() {
   myShader.setUniform('uFreq', mapF)
   myShader.setUniform('uAmp', mapV)
 
-
-  sphere(200, 400, 400)
+  if (isSphere == true) {
+    sphere(200, 400, 400)
+  }
+  else if (isSphere == false) {
+    box(200)
+  }
 }
 
 function noColor() {
@@ -133,7 +127,6 @@ function noColor() {
   
   drawingContext.filter = 'blur(px)'
 
-
   fft.analyze()
 
   const volume = amp.getLevel()
@@ -151,8 +144,6 @@ function noColor() {
   rotateX(sin(freq) + angle * 0.1)
   rotateY(cos(volume) + angle * 0.1)
 
-  
-
   const mapF = map(freq, 0, 1, 0, 20)
   const mapV = map(volume, 0, 0.2, 0, 0.5)
 
@@ -161,8 +152,12 @@ function noColor() {
   myShader.setUniform('uFreq', mapF)
   myShader.setUniform('uAmp', mapV)
 
-  
-  sphere(200, 400, 400)
+  if (isSphere == true) {
+    sphere(200, 400, 400)
+  }
+  else if (isSphere == false) {
+    box(200)
+  }
 }
 
 function keyPressed() {
@@ -181,6 +176,41 @@ function keyPressed() {
       isPressed = true;
     }
   }
+  if (key == 's' || key == 'S') {
+    isSphere = true;
+  }
+  else if (key == 'r' || key == 'R') {
+    noStroke()
+    isSphere = false;
+  }
+}
+
+function styleButton(button, x, y) {
+  button.position(x, y);
+  button.style("background-color", "transparent");
+  button.style("padding", "10px 10px");
+  button.style("font-size", "16px"); 
+  button.style("border", "2px solid #000000");
+  button.style("border-radius", "15px");
+  button.style("cursor", "pointer");
+}
+
+function togglePlayback() {
+  if (audio && audio.isPlaying()) {
+    audio.pause();
+    isPressed = false;
+  } else if (audio) {
+    audio.loop();
+    isPressed = true;
+  }
+}
+
+function toggleColorScheme() {
+  isGrayscale = !isGrayscale
+}
+
+function toggleShape() {
+  isSphere = !isSphere;
 }
 
 function handleFile(file) {
